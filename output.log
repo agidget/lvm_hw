@@ -1,0 +1,518 @@
+masha@Valdiss-MacBook-Air lvm_hw % vagrant ssh
+[vagrant@localhost ~]$ sudo -i
+[root@localhost vagrant]# lsblk
+NAME                    MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda                       8:0    0   40G  0 disk 
+├─sda1                    8:1    0    1M  0 part 
+├─sda2                    8:2    0    1G  0 part /boot
+└─sda3                    8:3    0   39G  0 part 
+  ├─VolGroup00-LogVol00 253:0    0 37.5G  0 lvm  /
+  └─VolGroup00-LogVol01 253:1    0  1.5G  0 lvm  [SWAP]
+sdb                       8:16   0   10G  0 disk 
+sdc                       8:32   0    2G  0 disk 
+sdd                       8:48   0    1G  0 disk 
+sde                       8:64   0    1G  0 disk 
+[root@localhost vagrant]# pvcreate /dev/sdb
+  Physical volume "/dev/sdb" successfully created.
+[root@localhost vagrant]# vgcreate vg_root /dev/sdb
+  Volume group "vg_root" successfully created
+[root@localhost vagrant]# lvcreate -n lv_root -l +100%FREE /dev/vg_root
+  Logical volume "lv_root" created.
+[root@localhost vagrant]# mkfs.xfs /dev/vg_root/lv_root 
+meta-data=/dev/vg_root/lv_root   isize=512    agcount=4, agsize=655104 blks
+         =                       sectsz=512   attr=2, projid32bit=1
+         =                       crc=1        finobt=0, sparse=0
+data     =                       bsize=4096   blocks=2620416, imaxpct=25
+         =                       sunit=0      swidth=0 blks
+naming   =version 2              bsize=4096   ascii-ci=0 ftype=1
+log      =internal log           bsize=4096   blocks=2560, version=2
+         =                       sectsz=512   sunit=0 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+[root@localhost vagrant]# mount /dev/vg_root/lv_root /mnt
+[root@localhost vagrant]# xfsdump -J - /dev/VolGroup00/LogVol00 | xfsrestore -J - /mnt
+xfsdump: using file dump (drive_simple) strategy
+xfsdump: version 3.1.7 (dump format 3.0)
+xfsrestore: using file dump (drive_simple) strategy
+xfsrestore: version 3.1.7 (dump format 3.0)
+xfsdump: level 0 dump of localhost.localdomain:/
+xfsdump: dump date: Sun Dec 11 13:39:36 2022
+xfsdump: session id: cb0994f2-f069-4202-bbe4-3a27b5610e41
+xfsdump: session label: ""
+xfsrestore: searching media for dump
+xfsdump: ino map phase 1: constructing initial dump list
+xfsdump: ino map phase 2: skipping (no pruning necessary)
+xfsdump: ino map phase 3: skipping (only one dump stream)
+xfsdump: ino map construction complete
+xfsdump: estimated dump size: 836150848 bytes
+xfsdump: creating dump session media file 0 (media 0, file 0)
+xfsdump: dumping ino map
+xfsdump: dumping directories
+xfsrestore: examining media file 0
+xfsrestore: dump description: 
+xfsrestore: hostname: localhost.localdomain
+xfsrestore: mount point: /
+xfsrestore: volume: /dev/mapper/VolGroup00-LogVol00
+xfsrestore: session time: Sun Dec 11 13:39:36 2022
+xfsrestore: level: 0
+xfsrestore: session label: ""
+xfsrestore: media label: ""
+xfsrestore: file system id: b60e9498-0baa-4d9f-90aa-069048217fee
+xfsrestore: session id: cb0994f2-f069-4202-bbe4-3a27b5610e41
+xfsrestore: media id: 8333a1f4-77bf-48c3-906b-2281089095bb
+xfsrestore: searching media for directory dump
+xfsrestore: reading directories
+xfsdump: dumping non-directory files
+xfsrestore: 2675 directories and 23461 entries processed
+xfsrestore: directory post-processing
+xfsrestore: restoring non-directory files
+xfsrestore: NOTE: ino 67147318 gen 135018246 not referenced: placing in orphanage
+xfsdump: ending media file
+xfsdump: media file size 813397456 bytes
+xfsdump: dump size (non-dir files) : 800310352 bytes
+xfsdump: dump complete: 39 seconds elapsed
+xfsdump: Dump Status: SUCCESS
+xfsrestore: WARNING: unable to rmdir /mnt/orphanage: Directory not empty
+xfsrestore: restore complete: 39 seconds elapsed
+xfsrestore: Restore Status: SUCCESS
+[root@localhost vagrant]# ls /mnt
+bin  boot  dev  etc  home  lib  lib64  media  mnt  opt  orphanage  proc  root  run  sbin  srv  sys  tmp  usr  var
+[root@localhost vagrant]# ls /mnt/proc/
+[root@localhost vagrant]# for i in /proc/ /sys/ /dev/ /run/ /boot/; do mount --bind $i /mnt/$i; done
+[root@localhost vagrant]# ls /mnt/proc/
+1     18    2325  2376  246  257  268  279  290  30   40   44   500  611  7     asound     driver       keys        mounts        stat           vmstat
+10    19    2327  2377  247  258  269  280  291  300  41   440  522  631  702   buddyinfo  execdomains  key-users   mtrr          swaps          zoneinfo
+1057  2     2329  2378  248  259  270  281  292  301  413  441  526  632  705   bus        fb           kmsg        net           sys
+1058  20    2330  2379  249  260  271  282  293  302  414  442  58   634  758   cgroups    filesystems  kpagecount  pagetypeinfo  sysrq-trigger
+1059  21    234   2398  250  261  272  283  294  303  42   443  604  659  8     cmdline    fs           kpageflags  partitions    sysvipc
+11    22    2358  240   251  262  273  284  295  304  424  444  605  661  9     consoles   interrupts   loadavg     sched_debug   timer_list
+13    2248  2360  241   252  263  274  285  296  31   425  445  606  663  91    cpuinfo    iomem        locks       schedstat     timer_stats
+14    2251  2372  2413  253  264  275  286  297  32   43   446  607  669  967   crypto     ioports      mdstat      scsi          tty
+15    2252  2373  242   254  265  276  287  298  330  437  447  608  673  968   devices    irq          meminfo     self          uptime
+16    2280  2374  243   255  266  277  288  299  333  438  45   609  675  969   diskstats  kallsyms     misc        slabinfo      version
+17    2281  2375  245   256  267  278  289  3    336  439  5    610  688  acpi  dma        kcore        modules     softirqs      vmallocinfo
+[root@localhost vagrant]# chroot /mnt/
+[root@localhost /]# grub2-mkconfig -o /boot/grub2/grub.cfg
+Generating grub configuration file ...
+Found linux image: /boot/vmlinuz-3.10.0-862.2.3.el7.x86_64
+Found initrd image: /boot/initramfs-3.10.0-862.2.3.el7.x86_64.img
+done
+[root@localhost /]# cd /boot ; for i in `ls initramfs-*img`; do dracut -v $i `echo $i|sed "s/initramfs-//g; s/.img//g"` --force; done
+Executing: /sbin/dracut -v initramfs-3.10.0-862.2.3.el7.x86_64.img 3.10.0-862.2.3.el7.x86_64 --force
+dracut module 'busybox' will not be installed, because command 'busybox' could not be found!
+dracut module 'crypt' will not be installed, because command 'cryptsetup' could not be found!
+dracut module 'dmraid' will not be installed, because command 'dmraid' could not be found!
+dracut module 'dmsquash-live-ntfs' will not be installed, because command 'ntfs-3g' could not be found!
+dracut module 'mdraid' will not be installed, because command 'mdadm' could not be found!
+dracut module 'multipath' will not be installed, because command 'multipath' could not be found!
+dracut module 'busybox' will not be installed, because command 'busybox' could not be found!
+dracut module 'crypt' will not be installed, because command 'cryptsetup' could not be found!
+dracut module 'dmraid' will not be installed, because command 'dmraid' could not be found!
+dracut module 'dmsquash-live-ntfs' will not be installed, because command 'ntfs-3g' could not be found!
+dracut module 'mdraid' will not be installed, because command 'mdadm' could not be found!
+dracut module 'multipath' will not be installed, because command 'multipath' could not be found!
+*** Including module: bash ***
+*** Including module: nss-softokn ***
+*** Including module: i18n ***
+*** Including module: drm ***
+*** Including module: plymouth ***
+*** Including module: dm ***
+Skipping udev rule: 64-device-mapper.rules
+Skipping udev rule: 60-persistent-storage-dm.rules
+Skipping udev rule: 55-dm.rules
+*** Including module: kernel-modules ***
+Omitting driver floppy
+*** Including module: lvm ***
+Skipping udev rule: 64-device-mapper.rules
+Skipping udev rule: 56-lvm.rules
+Skipping udev rule: 60-persistent-storage-lvm.rules
+*** Including module: qemu ***
+*** Including module: resume ***
+*** Including module: rootfs-block ***
+*** Including module: terminfo ***
+*** Including module: udev-rules ***
+Skipping udev rule: 40-redhat-cpu-hotplug.rules
+Skipping udev rule: 91-permissions.rules
+*** Including module: biosdevname ***
+*** Including module: systemd ***
+*** Including module: usrmount ***
+*** Including module: base ***
+*** Including module: fs-lib ***
+*** Including module: shutdown ***
+*** Including modules done ***
+*** Installing kernel module dependencies and firmware ***
+*** Installing kernel module dependencies and firmware done ***
+*** Resolving executable dependencies ***
+*** Resolving executable dependencies done***
+*** Hardlinking files ***
+*** Hardlinking files done ***
+*** Stripping files ***
+*** Stripping files done ***
+*** Generating early-microcode cpio image contents ***
+*** No early-microcode cpio image needed ***
+*** Store current command line parameters ***
+*** Creating image file ***
+*** Creating image file done ***
+*** Creating initramfs image file '/boot/initramfs-3.10.0-862.2.3.el7.x86_64.img' done ***
+[root@localhost boot]# cat /boot/grub2/grub.cfg | grep rd.lvm.lv
+        linux16 /vmlinuz-3.10.0-862.2.3.el7.x86_64 root=/dev/mapper/vg_root-lv_root ro no_timer_check console=tty0 console=ttyS0,115200n8 net.ifnames=0 biosdevname=0 elevator=noop crashkernel=auto rd.lvm.lv=VolGroup00/LogVol00 rd.lvm.lv=VolGroup00/LogVol01 rhgb quiet 
+[root@localhost boot]# cat /boot/grub2/grub.cfg | grep VolGroup00/LogVol00
+        linux16 /vmlinuz-3.10.0-862.2.3.el7.x86_64 root=/dev/mapper/vg_root-lv_root ro no_timer_check console=tty0 console=ttyS0,115200n8 net.ifnames=0 biosdevname=0 elevator=noop crashkernel=auto rd.lvm.lv=VolGroup00/LogVol00 rd.lvm.lv=VolGroup00/LogVol01 rhgb quiet 
+[root@localhost boot]# sed -i "s:VolGroup00/LogVol00:vg_root/lv_root:g" /boot/grub2/grub.cfg
+[root@localhost boot]# cat /boot/grub2/grub.cfg | grep VolGroup00/LogVol00
+[root@localhost boot]# cat /boot/grub2/grub.cfg | grep rd.lvm.lv
+        linux16 /vmlinuz-3.10.0-862.2.3.el7.x86_64 root=/dev/mapper/vg_root-lv_root ro no_timer_check console=tty0 console=ttyS0,115200n8 net.ifnames=0 biosdevname=0 elevator=noop crashkernel=auto rd.lvm.lv=vg_root/lv_root rd.lvm.lv=VolGroup00/LogVol01 rhgb quiet 
+[root@localhost boot]# shutdown -r now
+Running in chroot, ignoring request.
+[root@localhost boot]# exit
+exit
+[root@localhost vagrant]# shutdown -r now
+Connection to 127.0.0.1 closed by remote host.
+Connection to 127.0.0.1 closed.
+masha@Valdiss-MacBook-Air lvm_hw % 
+
+[root@localhost vagrant]# ls
+log2  typescript
+[root@localhost vagrant]# lvremove /dev/VolGroup00/LogVol00
+Do you really want to remove active logical volume VolGroup00/LogVol00? [y/n]: y
+  Logical volume "LogVol00" successfully removed
+[root@localhost vagrant]# lvcreate -n VolGroup00/LogVol00 -L 8G /dev/VolGroup00
+WARNING: xfs signature detected on /dev/VolGroup00/LogVol00 at offset 0. Wipe it? [y/n]: y
+  Wiping xfs signature on /dev/VolGroup00/LogVol00.
+  Logical volume "LogVol00" created.
+[root@localhost vagrant]# mkfs.xfs /dev/VolGroup00/LogVol00
+meta-data=/dev/VolGroup00/LogVol00 isize=512    agcount=4, agsize=524288 blks
+         =                       sectsz=512   attr=2, projid32bit=1
+         =                       crc=1        finobt=0, sparse=0
+data     =                       bsize=4096   blocks=2097152, imaxpct=25
+         =                       sunit=0      swidth=0 blks
+naming   =version 2              bsize=4096   ascii-ci=0 ftype=1
+log      =internal log           bsize=4096   blocks=2560, version=2
+         =                       sectsz=512   sunit=0 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+[root@localhost vagrant]# mount /dev/VolGroup00/LogVol00 /mnt
+[root@localhost vagrant]# xfsdump -J - /dev/vg_root/lv_root | xfsrestore -J - /mnt
+xfsrestore: using file dump (drive_simple) strategy
+xfsrestore: version 3.1.7 (dump format 3.0)
+xfsdump: using file dump (drive_simple) strategy
+xfsdump: version 3.1.7 (dump format 3.0)
+xfsdump: level 0 dump of localhost.localdomain:/
+xfsdump: dump date: Sun Dec 11 13:51:44 2022
+xfsdump: session id: c8ad55e7-dca3-4f53-91db-c1162220c271
+xfsdump: session label: ""
+xfsrestore: searching media for dump
+xfsdump: ino map phase 1: constructing initial dump list
+xfsdump: ino map phase 2: skipping (no pruning necessary)
+xfsdump: ino map phase 3: skipping (only one dump stream)
+xfsdump: ino map construction complete
+xfsdump: estimated dump size: 834780928 bytes
+xfsdump: creating dump session media file 0 (media 0, file 0)
+xfsdump: dumping ino map
+xfsdump: dumping directories
+xfsrestore: examining media file 0
+xfsrestore: dump description: 
+xfsrestore: hostname: localhost.localdomain
+xfsrestore: mount point: /
+xfsrestore: volume: /dev/mapper/vg_root-lv_root
+xfsrestore: session time: Sun Dec 11 13:51:44 2022
+xfsrestore: level: 0
+xfsrestore: session label: ""
+xfsrestore: media label: ""
+xfsrestore: file system id: 08817027-d477-4980-8202-80cc2816526e
+xfsrestore: session id: c8ad55e7-dca3-4f53-91db-c1162220c271
+xfsrestore: media id: c9748667-6bde-4d1a-9399-7fb67079867c
+xfsrestore: searching media for directory dump
+xfsrestore: reading directories
+xfsdump: dumping non-directory files
+xfsrestore: 2680 directories and 23467 entries processed
+xfsrestore: directory post-processing
+xfsrestore: restoring non-directory files
+xfsrestore: NOTE: ino 8517526 salvaging file, placing in orphanage/8388672.3336171903/67147318.135018246
+xfsdump: ending media file
+xfsdump: media file size 812031504 bytes
+xfsdump: dump size (non-dir files) : 798939448 bytes
+xfsdump: dump complete: 76 seconds elapsed
+xfsdump: Dump Status: SUCCESS
+xfsrestore: WARNING: unable to rmdir /mnt/orphanage: Directory not empty
+xfsrestore: restore complete: 76 seconds elapsed
+xfsrestore: Restore Status: SUCCESS
+[root@localhost vagrant]# for i in /proc/ /sys/ /dev/ /run/ /boot/; do mount --bind $i /mnt/$i; done
+[root@localhost vagrant]# chroot /mnt/
+[root@localhost /]# grub2-mkconfig -o /boot/grub2/grub.cfg
+Generating grub configuration file ...
+Found linux image: /boot/vmlinuz-3.10.0-862.2.3.el7.x86_64
+Found initrd image: /boot/initramfs-3.10.0-862.2.3.el7.x86_64.img
+done
+[root@localhost /]# cd /boot; for i in $(ls initramfs-*img); do dracut -v $i $(echo $i | sed "s/initramfs-//g; s/.img//g") --force; done
+Executing: /sbin/dracut -v initramfs-3.10.0-862.2.3.el7.x86_64.img 3.10.0-862.2.3.el7.x86_64 --force
+dracut module 'busybox' will not be installed, because command 'busybox' could not be found!
+dracut module 'crypt' will not be installed, because command 'cryptsetup' could not be found!
+dracut module 'dmraid' will not be installed, because command 'dmraid' could not be found!
+dracut module 'dmsquash-live-ntfs' will not be installed, because command 'ntfs-3g' could not be found!
+dracut module 'mdraid' will not be installed, because command 'mdadm' could not be found!
+dracut module 'multipath' will not be installed, because command 'multipath' could not be found!
+dracut module 'busybox' will not be installed, because command 'busybox' could not be found!
+dracut module 'crypt' will not be installed, because command 'cryptsetup' could not be found!
+dracut module 'dmraid' will not be installed, because command 'dmraid' could not be found!
+dracut module 'dmsquash-live-ntfs' will not be installed, because command 'ntfs-3g' could not be found!
+dracut module 'mdraid' will not be installed, because command 'mdadm' could not be found!
+dracut module 'multipath' will not be installed, because command 'multipath' could not be found!
+*** Including module: bash ***
+*** Including module: nss-softokn ***
+*** Including module: i18n ***
+*** Including module: drm ***
+*** Including module: plymouth ***
+*** Including module: dm ***
+Skipping udev rule: 64-device-mapper.rules
+Skipping udev rule: 60-persistent-storage-dm.rules
+Skipping udev rule: 55-dm.rules
+*** Including module: kernel-modules ***
+Omitting driver floppy
+*** Including module: lvm ***
+Skipping udev rule: 64-device-mapper.rules
+Skipping udev rule: 56-lvm.rules
+Skipping udev rule: 60-persistent-storage-lvm.rules
+*** Including module: qemu ***
+*** Including module: resume ***
+*** Including module: rootfs-block ***
+*** Including module: terminfo ***
+*** Including module: udev-rules ***
+Skipping udev rule: 40-redhat-cpu-hotplug.rules
+Skipping udev rule: 91-permissions.rules
+*** Including module: biosdevname ***
+*** Including module: systemd ***
+*** Including module: usrmount ***
+*** Including module: base ***
+*** Including module: fs-lib ***
+*** Including module: shutdown ***
+*** Including modules done ***
+*** Installing kernel module dependencies and firmware ***
+*** Installing kernel module dependencies and firmware done ***
+*** Resolving executable dependencies ***
+*** Resolving executable dependencies done***
+*** Hardlinking files ***
+*** Hardlinking files done ***
+*** Stripping files ***
+*** Stripping files done ***
+*** Generating early-microcode cpio image contents ***
+*** No early-microcode cpio image needed ***
+*** Store current command line parameters ***
+*** Creating image file ***
+*** Creating image file done ***
+*** Creating initramfs image file '/boot/initramfs-3.10.0-862.2.3.el7.x86_64.img' done ***
+[root@localhost boot]# lslbk
+bash: lslbk: command not found
+[root@localhost boot]# lsblk
+NAME                    MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda                       8:0    0   40G  0 disk 
+├─sda1                    8:1    0    1M  0 part 
+├─sda2                    8:2    0    1G  0 part /boot
+└─sda3                    8:3    0   39G  0 part 
+  ├─VolGroup00-LogVol01 253:1    0  1.5G  0 lvm  [SWAP]
+  └─VolGroup00-LogVol00 253:2    0    8G  0 lvm  /
+sdb                       8:16   0   10G  0 disk 
+└─vg_root-lv_root       253:0    0   10G  0 lvm  
+sdc                       8:32   0    2G  0 disk 
+sdd                       8:48   0    1G  0 disk 
+sde                       8:64   0    1G  0 disk 
+[root@localhost boot]# pvcreate /dev/sdc /dev/sdd
+  Physical volume "/dev/sdc" successfully created.
+  Physical volume "/dev/sdd" successfully created.
+[root@localhost boot]# vgcreate vg_var /dev/sdc /dev/sdd
+  Volume group "vg_var" successfully created
+[root@localhost boot]# lvcreate -L 950M -m1 -n lv_var vg_var
+  Rounding up size to full physical extent 952.00 MiB
+  Logical volume "lv_var" created.
+[root@localhost boot]# lsblk
+NAME                     MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda                        8:0    0   40G  0 disk 
+├─sda1                     8:1    0    1M  0 part 
+├─sda2                     8:2    0    1G  0 part /boot
+└─sda3                     8:3    0   39G  0 part 
+  ├─VolGroup00-LogVol01  253:1    0  1.5G  0 lvm  [SWAP]
+  └─VolGroup00-LogVol00  253:2    0    8G  0 lvm  /
+sdb                        8:16   0   10G  0 disk 
+└─vg_root-lv_root        253:0    0   10G  0 lvm  
+sdc                        8:32   0    2G  0 disk 
+├─vg_var-lv_var_rmeta_0  253:3    0    4M  0 lvm  
+│ └─vg_var-lv_var        253:7    0  952M  0 lvm  
+└─vg_var-lv_var_rimage_0 253:4    0  952M  0 lvm  
+  └─vg_var-lv_var        253:7    0  952M  0 lvm  
+sdd                        8:48   0    1G  0 disk 
+├─vg_var-lv_var_rmeta_1  253:5    0    4M  0 lvm  
+│ └─vg_var-lv_var        253:7    0  952M  0 lvm  
+└─vg_var-lv_var_rimage_1 253:6    0  952M  0 lvm  
+  └─vg_var-lv_var        253:7    0  952M  0 lvm  
+sde                        8:64   0    1G  0 disk 
+[root@localhost boot]# mkfs.ext4 /dev/vg_var/lv_var
+mke2fs 1.42.9 (28-Dec-2013)
+Filesystem label=
+OS type: Linux
+Block size=4096 (log=2)
+Fragment size=4096 (log=2)
+Stride=0 blocks, Stripe width=0 blocks
+60928 inodes, 243712 blocks
+12185 blocks (5.00%) reserved for the super user
+First data block=0
+Maximum filesystem blocks=249561088
+8 block groups
+32768 blocks per group, 32768 fragments per group
+7616 inodes per group
+Superblock backups stored on blocks: 
+        32768, 98304, 163840, 229376
+
+Allocating group tables: done                            
+Writing inode tables: done                            
+Creating journal (4096 blocks): done
+Writing superblocks and filesystem accounting information: done
+
+[root@localhost boot]# mount /dev/vg_var/lv_var /mnt
+[root@localhost boot]# cp -aR /var/* /mnt/
+[root@localhost boot]# mkdir /tmp/oldvar && mv /var/* /tmp/oldvar
+[root@localhost boot]# ls /tmp/oldvar
+adm  cache  db  empty  games  gopher  kerberos  lib  local  lock  log  mail  nis  opt  preserve  run  spool  tmp  yp
+[root@localhost boot]# umount /mnt
+[root@localhost boot]# mount /dev/vg_var/lv_var /var
+[root@localhost boot]# lsblk
+NAME                     MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda                        8:0    0   40G  0 disk 
+├─sda1                     8:1    0    1M  0 part 
+├─sda2                     8:2    0    1G  0 part /boot
+└─sda3                     8:3    0   39G  0 part 
+  ├─VolGroup00-LogVol01  253:1    0  1.5G  0 lvm  [SWAP]
+  └─VolGroup00-LogVol00  253:2    0    8G  0 lvm  /
+sdb                        8:16   0   10G  0 disk 
+└─vg_root-lv_root        253:0    0   10G  0 lvm  
+sdc                        8:32   0    2G  0 disk 
+├─vg_var-lv_var_rmeta_0  253:3    0    4M  0 lvm  
+│ └─vg_var-lv_var        253:7    0  952M  0 lvm  /var
+└─vg_var-lv_var_rimage_0 253:4    0  952M  0 lvm  
+  └─vg_var-lv_var        253:7    0  952M  0 lvm  /var
+sdd                        8:48   0    1G  0 disk 
+├─vg_var-lv_var_rmeta_1  253:5    0    4M  0 lvm  
+│ └─vg_var-lv_var        253:7    0  952M  0 lvm  /var
+└─vg_var-lv_var_rimage_1 253:6    0  952M  0 lvm  
+  └─vg_var-lv_var        253:7    0  952M  0 lvm  /var
+sde                        8:64   0    1G  0 disk 
+[root@localhost boot]# echo "`blkid | grep var: | awk '{print $2}'` /var ext4 defaults 0 0" >> /etc/fstab
+[root@localhost boot]# shutdown -r now
+Running in chroot, ignoring request.
+[root@localhost boot]# exit
+exit
+[root@localhost vagrant]# shutdown -r now
+Connection to 127.0.0.1 closed by remote host.
+Connection to 127.0.0.1 closed.
+
+masha@Valdiss-MacBook-Air lvm_hw % vagrant ssh
+Last login: Sun Dec 11 13:47:41 2022 from 10.0.2.2
+[vagrant@localhost ~]$ lsblk
+NAME                     MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda                        8:0    0   40G  0 disk 
+├─sda1                     8:1    0    1M  0 part 
+├─sda2                     8:2    0    1G  0 part /boot
+└─sda3                     8:3    0   39G  0 part 
+  ├─VolGroup00-LogVol00  253:0    0    8G  0 lvm  /
+  └─VolGroup00-LogVol01  253:1    0  1.5G  0 lvm  [SWAP]
+sdb                        8:16   0   10G  0 disk 
+└─vg_root-lv_root        253:2    0   10G  0 lvm  
+sdc                        8:32   0    2G  0 disk 
+├─vg_var-lv_var_rmeta_0  253:3    0    4M  0 lvm  
+│ └─vg_var-lv_var        253:7    0  952M  0 lvm  /var
+└─vg_var-lv_var_rimage_0 253:4    0  952M  0 lvm  
+  └─vg_var-lv_var        253:7    0  952M  0 lvm  /var
+sdd                        8:48   0    1G  0 disk 
+├─vg_var-lv_var_rmeta_1  253:5    0    4M  0 lvm  
+│ └─vg_var-lv_var        253:7    0  952M  0 lvm  /var
+└─vg_var-lv_var_rimage_1 253:6    0  952M  0 lvm  
+  └─vg_var-lv_var        253:7    0  952M  0 lvm  /var
+sde                        8:64   0    1G  0 disk 
+[vagrant@localhost ~]$ sudo -i 
+[root@localhost ~]# cd /home/vagrant/
+[root@localhost vagrant]# ls
+log2  typescript
+[root@localhost vagrant]# script log3
+Script started, file is log3
+[root@localhost vagrant]# lvremove /dev/vg_root/lv_root
+Do you really want to remove active logical volume vg_root/lv_root? [y/n]: y
+  Logical volume "lv_root" successfully removed
+[root@localhost vagrant]# vgremove /dev/vg_root
+  Volume group "vg_root" successfully removed
+[root@localhost vagrant]# pvremove /dev/sdb
+  Labels on physical volume "/dev/sdb" successfully wiped.
+[root@localhost vagrant]# lvcreate -n LogVol_Home -L 2G /dev/VolGroup00
+  Logical volume "LogVol_Home" created.
+[root@localhost vagrant]# mkfs.xfs /dev/VolGroup00/LogVol_Home
+meta-data=/dev/VolGroup00/LogVol_Home isize=512    agcount=4, agsize=131072 blks
+         =                       sectsz=512   attr=2, projid32bit=1
+         =                       crc=1        finobt=0, sparse=0
+data     =                       bsize=4096   blocks=524288, imaxpct=25
+         =                       sunit=0      swidth=0 blks
+naming   =version 2              bsize=4096   ascii-ci=0 ftype=1
+log      =internal log           bsize=4096   blocks=2560, version=2
+         =                       sectsz=512   sunit=0 blks, lazy-count=1
+realtime =none                   extsz=4096   blocks=0, rtextents=0
+[root@localhost vagrant]# mount /dev/VolGroup00/LogVol_Home /mnt/
+[root@localhost vagrant]# cp -aR /home/* /mnt/
+[root@localhost vagrant]# rm -rf /home/*
+[root@localhost vagrant]# umount /mnt
+[root@localhost vagrant]# mount /dev/VolGroup00/LogVol_Home /home/
+[root@localhost vagrant]# echo "`blkid | grep Home | awk '{print $2}'` /home xfs defaults 0 0" >> /etc/fstab
+[root@localhost vagrant]# lsblk
+NAME                       MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda                          8:0    0   40G  0 disk 
+├─sda1                       8:1    0    1M  0 part 
+├─sda2                       8:2    0    1G  0 part /boot
+└─sda3                       8:3    0   39G  0 part 
+  ├─VolGroup00-LogVol00    253:0    0    8G  0 lvm  /
+  ├─VolGroup00-LogVol01    253:1    0  1.5G  0 lvm  [SWAP]
+  └─VolGroup00-LogVol_Home 253:2    0    2G  0 lvm  /home
+sdb                          8:16   0   10G  0 disk 
+sdc                          8:32   0    2G  0 disk 
+├─vg_var-lv_var_rmeta_0    253:3    0    4M  0 lvm  
+│ └─vg_var-lv_var          253:7    0  952M  0 lvm  /var
+└─vg_var-lv_var_rimage_0   253:4    0  952M  0 lvm  
+  └─vg_var-lv_var          253:7    0  952M  0 lvm  /var
+sdd                          8:48   0    1G  0 disk 
+├─vg_var-lv_var_rmeta_1    253:5    0    4M  0 lvm  
+│ └─vg_var-lv_var          253:7    0  952M  0 lvm  /var
+└─vg_var-lv_var_rimage_1   253:6    0  952M  0 lvm  
+  └─vg_var-lv_var          253:7    0  952M  0 lvm  /var
+sde                          8:64   0    1G  0 disk 
+[root@localhost vagrant]# touch /home/file{1..20}
+[root@localhost vagrant]# ls /home
+file1  file10  file11  file12  file13  file14  file15  file16  file17  file18  file19  file2  file20  file3  file4  file5  file6  file7  file8  file9  vagrant
+[root@localhost vagrant]# lvcreate -L 100MB -s -n home_snap /dev/VolGroup00/LogVol_Home
+  Rounding up size to full physical extent 128.00 MiB
+  Logical volume "home_snap" created.
+[root@localhost vagrant]# rm -f /home/file{11..20}
+[root@localhost vagrant]# ls /home
+file1  file10  file2  file3  file4  file5  file6  file7  file8  file9  vagrant
+[root@localhost vagrant]# umount /home
+[root@localhost vagrant]# lvconvert --merge /dev/VolGroup00/home_snap
+  Merging of volume VolGroup00/home_snap started.
+  VolGroup00/LogVol_Home: Merged: 100.00%
+[root@localhost vagrant]# mount /home
+[root@localhost vagrant]# ls /home/
+file1  file10  file11  file12  file13  file14  file15  file16  file17  file18  file19  file2  file20  file3  file4  file5  file6  file7  file8  file9  vagrant
+[root@localhost vagrant]# ll /home/
+total 0
+-rw-r--r--. 1 root    root      0 Dec 11 14:22 file1
+-rw-r--r--. 1 root    root      0 Dec 11 14:22 file10
+-rw-r--r--. 1 root    root      0 Dec 11 14:22 file11
+-rw-r--r--. 1 root    root      0 Dec 11 14:22 file12
+-rw-r--r--. 1 root    root      0 Dec 11 14:22 file13
+-rw-r--r--. 1 root    root      0 Dec 11 14:22 file14
+-rw-r--r--. 1 root    root      0 Dec 11 14:22 file15
+-rw-r--r--. 1 root    root      0 Dec 11 14:22 file16
+-rw-r--r--. 1 root    root      0 Dec 11 14:22 file17
+-rw-r--r--. 1 root    root      0 Dec 11 14:22 file18
+-rw-r--r--. 1 root    root      0 Dec 11 14:22 file19
+-rw-r--r--. 1 root    root      0 Dec 11 14:22 file2
+-rw-r--r--. 1 root    root      0 Dec 11 14:22 file20
+-rw-r--r--. 1 root    root      0 Dec 11 14:22 file3
+-rw-r--r--. 1 root    root      0 Dec 11 14:22 file4
+-rw-r--r--. 1 root    root      0 Dec 11 14:22 file5
+-rw-r--r--. 1 root    root      0 Dec 11 14:22 file6
+-rw-r--r--. 1 root    root      0 Dec 11 14:22 file7
+-rw-r--r--. 1 root    root      0 Dec 11 14:22 file8
+-rw-r--r--. 1 root    root      0 Dec 11 14:22 file9
+drwx------. 3 vagrant vagrant 116 Dec 11 14:07 vagrant
